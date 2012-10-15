@@ -1,0 +1,23 @@
+﻿Build started 10/14/2012 7:51:04 PM.
+     1>Project "E:\irrlicht\irrlicht-1.8\examples\Half-Life Map\Quake3Map_vc10.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\02.Quake3Map.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _VC80_UPGRADE=0x0710 /D _MBCS /Gm- /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt CHL1LevelMesh.cpp
+         CHL1LevelMesh.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\..\bin\Win32-VisualStudio\02.Quake3Map.exe" /NOLOGO /LIBPATH:"..\..\lib\Win32-visualstudio" irrlicht.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\02.Quake3Map.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"E:\irrlicht\irrlicht-1.8\bin\Win32-VisualStudio\02.Quake3Map.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /IMPLIB:"..\..\bin\Win32-VisualStudio\02.Quake3Map.lib" /MACHINE:X86 Debug\CHL1MeshFileLoader.obj
+         Debug\CHL1LevelMesh.obj
+         Debug\main.obj
+         LINK : ..\..\bin\Win32-VisualStudio\02.Quake3Map.exe not found or not built by the last incremental link; performing full link
+         Quake3Map_vc10.vcxproj -> E:\irrlicht\irrlicht-1.8\examples\Half-Life Map\..\..\bin\Win32-VisualStudio\02.Quake3Map.exe
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"..\..\bin\Win32-VisualStudio\02.Quake3Map.exe;#1" /manifest Debug\02.Quake3Map.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         Deleting file "Debug\02.Quake3Map.unsuccessfulbuild".
+         Touching "Debug\02.Quake3Map.lastbuildstate".
+     1>Done Building Project "E:\irrlicht\irrlicht-1.8\examples\Half-Life Map\Quake3Map_vc10.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.30
