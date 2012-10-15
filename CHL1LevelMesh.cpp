@@ -271,43 +271,21 @@ void CHL1LevelMesh::calculateVertexNormals()
 			vNormal[0] = Planes[Faces[j].iPlane].vNormal[0] * invert;
 			vNormal[1] = Planes[Faces[j].iPlane].vNormal[1] * invert;
 			vNormal[2] = Planes[Faces[j].iPlane].vNormal[2] * invert;
-
-
 			int min = Faces[j].iFirstEdge;
 			int max = Faces[j].iFirstEdge + Faces[j].nEdges;
 			for (int k= min+1; k < max; k++)
 			{
 				int edgev1 = Edges[abs(Surfedges[k])].vertex[0];
 				int edgev2 = Edges[abs(Surfedges[k])].vertex[1];
+				verticesNorm[edgev1].vNormal[0] = verticesNorm[edgev1].vNormal[0] + vNormal[0];
+				verticesNorm[edgev1].vNormal[1] = verticesNorm[edgev1].vNormal[1] + vNormal[1];
+				verticesNorm[edgev1].vNormal[2] = verticesNorm[edgev1].vNormal[2] + vNormal[2];
+				verticesNorm[edgev1].divCount++;
 
-				if (edgev1 >= 0 && edgev1 < NumVertices)
-				{
-					verticesNorm[edgev1].vNormal[0] = verticesNorm[edgev1].vNormal[0] + vNormal[0];
-					verticesNorm[edgev1].vNormal[1] = verticesNorm[edgev1].vNormal[1] + vNormal[1];
-					verticesNorm[edgev1].vNormal[2] = verticesNorm[edgev1].vNormal[2] + vNormal[2];
-					verticesNorm[edgev1].divCount++;
-				}
-				else
-				{
-					snprintf( buf, sizeof ( buf ),"Vert %d OUT OF BOUNDS EDGE %d FACE %d %d %d", edgev1, k, j, Faces[j].iFirstEdge, Faces[j].nEdges);
-					device->getLogger()->log( buf, ELL_INFORMATION);
-
-				}
-
-				if (edgev2 >= 0 && edgev2 < NumVertices)
-				{
-					verticesNorm[edgev2].vNormal[0] = verticesNorm[edgev2].vNormal[0] + vNormal[0];
-					verticesNorm[edgev2].vNormal[1] = verticesNorm[edgev2].vNormal[1] + vNormal[1];
-					verticesNorm[edgev2].vNormal[2] = verticesNorm[edgev2].vNormal[2] + vNormal[2];
-					verticesNorm[edgev2].divCount++;
-				}
-				else
-				{
-					snprintf( buf, sizeof ( buf ),"Vert %d OUT OF BOUNDS EDGE %d FACE %d %d %d", edgev1, k, j, Faces[j].iFirstEdge, Faces[j].nEdges);
-					device->getLogger()->log( buf, ELL_INFORMATION);
-
-				}
-
+				verticesNorm[edgev2].vNormal[0] = verticesNorm[edgev2].vNormal[0] + vNormal[0];
+				verticesNorm[edgev2].vNormal[1] = verticesNorm[edgev2].vNormal[1] + vNormal[1];
+				verticesNorm[edgev2].vNormal[2] = verticesNorm[edgev2].vNormal[2] + vNormal[2];
+				verticesNorm[edgev2].divCount++;
 			}
 		}
 
@@ -318,8 +296,6 @@ void CHL1LevelMesh::calculateVertexNormals()
 			verticesNorm[i].vNormal[2] = verticesNorm[i].vNormal[2] / verticesNorm[i].divCount;
 			snprintf( buf, sizeof ( buf ),"Vert %d averaged out from %d normals (%d %d %d)", i, verticesNorm[i].divCount, verticesNorm[i].vNormal[0], verticesNorm[i].vNormal[1], verticesNorm[i].vNormal[2]);
 			device->getLogger()->log( buf, ELL_INFORMATION);
-
-			
 		}
 	}
 
