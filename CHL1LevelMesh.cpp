@@ -54,6 +54,7 @@ CHL1LevelMesh::CHL1LevelMesh(io::IFileSystem* fs, scene::ISceneManager* smgr,
 	for ( s32 i = 0; i!= E_Q3_MESH_SIZE; ++i )
 	{
 		Mesh[i] = 0;
+		//Mesh = 0;
 	}
 
 	Driver = smgr ? smgr->getVideoDriver() : 0;
@@ -649,7 +650,6 @@ void CHL1LevelMesh::parser_parse( const void * data, const u32 size, CHL1LevelMe
 	groupList->drop();
 }
 
-
 scene::SMesh** CHL1LevelMesh::buildMesh(s32 num)
 {
 	scene::SMesh** newmesh = new SMesh *[quake3::E_Q3_MESH_SIZE];
@@ -833,90 +833,68 @@ vector3df CHL1LevelMesh::NormalPlane(int plane)
 
 void CHL1LevelMesh::constructMesh()
 {
-	// reserve buffer. 
-	s32 i; // new ISO for scoping problem with some compilers
-
 
 	// go through all faces and add them to the buffer.
 	int allocationValue = NumVertices;
-	
-	SMeshBuffer* buffer = new SMeshBuffer;
-	
-
-	vector3df headVert;
-	int Surfedge;
-	vector3df normal;
-	SColor color;
-	u16 meshbuffercount = 0;
-	S3DVertex* vertexPointer;
-	for (int f=1; f<NumVertices; f++)
-	{
-		
-		S3DVertex vertexPointer = S3DVertex(verticesNorm[f].vPosition, verticesNorm[f].vNormal2, color, vector2d<f32>(2,2));
-
-		buffer->Vertices.push_back(S3DVertex);
-	}
-	
-
-	snprintf( buf, sizeof ( buf ),"It's all been pushed back!", meshbuffercount);
-	device->getLogger()->log( buf, ELL_INFORMATION);
-	system("PAUSE");
+	SMeshBuffer *buffer = 0;
+	buffer = new SMeshBuffer();
+	Mesh[0] = new SMesh;
 	Mesh[0]->addMeshBuffer(buffer);
 
-	for (i=0; i<NumFaces; i++)
+	buffer->Vertices.reallocate(NumVertices);
+
+	int headVert;
+	SColor color;
+	u16 meshbuffercount = 0;
+	for (int f=0; f<NumVertices; f++)
 	{
-		normal = NormalPlane(Faces[i].iPlane);
-		color = ColorGen();
+		buffer->Vertices.push_back(S3DVertex(verticesNorm[f].vPosition, verticesNorm[f].vNormal2, color, vector2d<f32>(2,2)));
+	}
 
-		vector2d< f32 > tcord;
-		tcord.X=0;
-		tcord.Y=0;
-
-		if (Faces[i].nPlaneSide != 0)
-			normal * -1;
-		Surfedge = Surfedges[Faces[i].iFirstEdge];
+	int Surfedge;
+	for (int k=0; k<NumFaces; k++)
+	{
+		Surfedge = Surfedges[Faces[k].iFirstEdge];
 
 		if(Surfedge > 0)
-			headVert = Vert(Edges[Surfedge].vertex[0]);
+			headVert = Edges[Surfedge].vertex[0];
 		else
-			headVert = Vert(Edges[abs(Surfedge)].vertex[1]);
+			headVert = Edges[abs(Surfedge)].vertex[1];
+
 		int headVertRef = Edges[Surfedge].vertex[0];
-
-
-
-
+		u32 indiceIndex[3];
+		indiceIndex[0] = headVert;
 
 		//printFaces(i);
-		for (int j=1; j <  ((Faces[i].nEdges)-1); j++)
+		for (int j=1; j <  ((Faces[k].nEdges)-1); j++)
+		{
+			
+			Surfedge = ((Surfedges[Faces[k].iFirstEdge]) + j);
+
+			if(Surfedge > 0)
 			{
-				Surfedge = ((Surfedges[Faces[i].iFirstEdge]) + j);
-				buffer-> Vertices.push_back(S3DVertex(headVert, normal, color, tcord));
-				if(Surfedge > 0)
-				{
 
-					buffer-> Vertices.push_back(S3DVertex(Vert(Edges[Surfedge].vertex[0]), normal, color, tcord));
-					buffer-> Vertices.push_back(S3DVertex(Vert(Edges[Surfedge].vertex[1]), normal, color, tcord));
-					//snprintf( buf, sizeof ( buf ),"Triangle %d %d %d", headVertRef, Edges[Surfedge].vertex[0],  Edges[Surfedge].vertex[1]);
+				indiceIndex[1] = Edges[Surfedge].vertex[0];
+				indiceIndex[2] = Edges[Surfedge].vertex[1];
+				//snprintf( buf, sizeof ( buf ),"Triangle %d %d %d", headVertRef, Edges[Surfedge].vertex[0],  Edges[Surfedge].vertex[1]);
 
-				}
-				else
-				{
-					Surfedge = abs(Surfedge);
-					buffer-> Vertices.push_back(S3DVertex(Vert(Edges[Surfedge].vertex[1]), normal, color, tcord));
-					buffer-> Vertices.push_back(S3DVertex(Vert(Edges[Surfedge].vertex[0]), normal, color, tcord));
-					//snprintf( buf, sizeof ( buf ),"Triangle %d %d %d", headVertRef, Edges[Surfedge].vertex[1],  Edges[Surfedge].vertex[0]);
-				}
-				buffer->Indices.push_back(meshbuffercount);
-				buffer->Indices.push_back(meshbuffercount+1);
-				buffer->Indices.push_back(meshbuffercount+2);
-				meshbuffercount = meshbuffercount+3;
-
-				//device->getLogger()->log( buf, ELL_INFORMATION);
-				
+			}
+			else
+			{
+				Surfedge = abs(Surfedge);
+				indiceIndex[1] = Edges[Surfedge].vertex[1];
+				indiceIndex[2] = Edges[Surfedge].vertex[0];
+				//snprintf( buf, sizeof ( buf ),"Triangle %d %d %d", headVertRef, Edges[Surfedge].vertex[1],  Edges[Surfedge].vertex[0]);
 			}
 
-		snprintf( buf, sizeof ( buf ),"Finished Face # %d", i);
-		device->getLogger()->log( buf, ELL_INFORMATION);
+			buffer->Indices.push_back(indiceIndex[0]);
+			buffer->Indices.push_back(indiceIndex[1]);
+			buffer->Indices.push_back(indiceIndex[2]);
+			meshbuffercount = meshbuffercount+3;
+
+			//device->getLogger()->log( buf, ELL_INFORMATION);
+
+		}
 
 	}
 	snprintf( buf, sizeof ( buf ),"All done with Faces! There are # %d verts", meshbuffercount);

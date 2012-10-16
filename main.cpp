@@ -12,7 +12,7 @@ int main()
 {
 
 	IrrlichtDevice *device =
-		createDevice(video::EDT_NULL, core::dimension2d<u32>(640, 480));
+		createDevice(video::EDT_SOFTWARE, core::dimension2d<u32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
