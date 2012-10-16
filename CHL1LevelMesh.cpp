@@ -142,7 +142,7 @@ bool CHL1LevelMesh::loadFile(io::IReadFile* file)
 	//loadTextures();
 	calculateVertexNormals();
 	printLoaded();
-	//constructMesh();
+	constructMesh();
 	//cleanMeshes();
 	//solveTJunction();
 
@@ -244,23 +244,13 @@ void CHL1LevelMesh::loadFaces(tBSPLump* l, io::IReadFile* file)
 
 void CHL1LevelMesh::calculateVertexNormals()
 	{
-		for(int k=0; k<NumPlanes; k++)
-		{
-			snprintf( buf, sizeof ( buf )," %d Normal %d %d %d", k, Planes[k].vNormal[0], Planes[k].vNormal[1], Planes[k].vNormal[2]);
-			device->getLogger()->log( buf, ELL_INFORMATION);
-			
-
-		}
-		system("Pause");
 		verticesNorm = new vertexNormal[NumVertices];
 		for (int i=0; i < NumVertices; i++)
 		{
-			verticesNorm[i].vPosition[0] = Vertices->vPosition[0];
-			verticesNorm[i].vPosition[1] = Vertices->vPosition[1];
-			verticesNorm[i].vPosition[2] = Vertices->vPosition[2];
+			verticesNorm[i].vPosition = vector3df(Vertices->vPosition[0], Vertices->vPosition[1], Vertices->vPosition[2]);
 			verticesNorm[i].divCount = 0;
 		}
-		f32 vNormal[3];
+		f32 planeNormal[3];
 		for (int j=1; j < NumFaces; j++)
 		{
 			int invert;
@@ -268,34 +258,35 @@ void CHL1LevelMesh::calculateVertexNormals()
 				invert= -1;
 			else
 				invert= 1;
-			vNormal[0] = Planes[Faces[j].iPlane].vNormal[0] * invert;
-			vNormal[1] = Planes[Faces[j].iPlane].vNormal[1] * invert;
-			vNormal[2] = Planes[Faces[j].iPlane].vNormal[2] * invert;
+			planeNormal[0] = Planes[Faces[j].iPlane].vNormal[0] * invert;
+			planeNormal[1] = Planes[Faces[j].iPlane].vNormal[1] * invert;
+			planeNormal[2] = Planes[Faces[j].iPlane].vNormal[2] * invert;
 			int min = Faces[j].iFirstEdge;
 			int max = Faces[j].iFirstEdge + Faces[j].nEdges;
 			for (int k= min+1; k < max; k++)
 			{
 				int edgev1 = Edges[abs(Surfedges[k])].vertex[0];
 				int edgev2 = Edges[abs(Surfedges[k])].vertex[1];
-				verticesNorm[edgev1].vNormal[0] = verticesNorm[edgev1].vNormal[0] + vNormal[0];
-				verticesNorm[edgev1].vNormal[1] = verticesNorm[edgev1].vNormal[1] + vNormal[1];
-				verticesNorm[edgev1].vNormal[2] = verticesNorm[edgev1].vNormal[2] + vNormal[2];
+				verticesNorm[edgev1].vNormal[0] = verticesNorm[edgev1].vNormal[0] + planeNormal[0];
+				verticesNorm[edgev1].vNormal[1] = verticesNorm[edgev1].vNormal[1] + planeNormal[1];
+				verticesNorm[edgev1].vNormal[2] = verticesNorm[edgev1].vNormal[2] + planeNormal[2];
 				verticesNorm[edgev1].divCount++;
 
-				verticesNorm[edgev2].vNormal[0] = verticesNorm[edgev2].vNormal[0] + vNormal[0];
-				verticesNorm[edgev2].vNormal[1] = verticesNorm[edgev2].vNormal[1] + vNormal[1];
-				verticesNorm[edgev2].vNormal[2] = verticesNorm[edgev2].vNormal[2] + vNormal[2];
+				verticesNorm[edgev2].vNormal[0] = verticesNorm[edgev2].vNormal[0] + planeNormal[0];
+				verticesNorm[edgev2].vNormal[1] = verticesNorm[edgev2].vNormal[1] + planeNormal[1];
+				verticesNorm[edgev2].vNormal[2] = verticesNorm[edgev2].vNormal[2] + planeNormal[2];
 				verticesNorm[edgev2].divCount++;
 			}
 		}
 
 		for (int i=0; i<NumVertices; i++)
 		{
-			verticesNorm[i].vNormal[0] = verticesNorm[i].vNormal[0] / verticesNorm[i].divCount;
-			verticesNorm[i].vNormal[1] = verticesNorm[i].vNormal[1] / verticesNorm[i].divCount;
-			verticesNorm[i].vNormal[2] = verticesNorm[i].vNormal[2] / verticesNorm[i].divCount;
-			snprintf( buf, sizeof ( buf ),"Vert %d averaged out from %d normals (%d %d %d)", i, verticesNorm[i].divCount, verticesNorm[i].vNormal[0], verticesNorm[i].vNormal[1], verticesNorm[i].vNormal[2]);
-			device->getLogger()->log( buf, ELL_INFORMATION);
+			verticesNorm[i].vNormal2 = vector3df(
+												(verticesNorm[i].vNormal[0] / verticesNorm[i].divCount), 
+												(verticesNorm[i].vNormal[1] / verticesNorm[i].divCount), 
+												(verticesNorm[i].vNormal[2] / verticesNorm[i].divCount));
+			//snprintf( buf, sizeof ( buf ),"Vert %d averaged out from %d normals (%d %d %d)", i, verticesNorm[i].divCount, verticesNorm[i].vNormal[0], verticesNorm[i].vNormal[1], verticesNorm[i].vNormal[2]);
+			//device->getLogger()->log( buf, ELL_INFORMATION);
 		}
 	}
 
@@ -847,18 +838,31 @@ void CHL1LevelMesh::constructMesh()
 
 
 	// go through all faces and add them to the buffer.
-	
+	int allocationValue = NumVertices;
 	
 	SMeshBuffer* buffer = new SMeshBuffer;
-	buffer->Indices.reallocate(6000);
-	buffer->Vertices.reallocate(6000);
-	Mesh[0]->addMeshBuffer(buffer);
+	
 
 	vector3df headVert;
 	int Surfedge;
 	vector3df normal;
 	SColor color;
 	u16 meshbuffercount = 0;
+	S3DVertex* vertexPointer;
+	for (int f=1; f<NumVertices; f++)
+	{
+		
+		S3DVertex vertexPointer = S3DVertex(verticesNorm[f].vPosition, verticesNorm[f].vNormal2, color, vector2d<f32>(2,2));
+
+		buffer->Vertices.push_back(S3DVertex);
+	}
+	
+
+	snprintf( buf, sizeof ( buf ),"It's all been pushed back!", meshbuffercount);
+	device->getLogger()->log( buf, ELL_INFORMATION);
+	system("PAUSE");
+	Mesh[0]->addMeshBuffer(buffer);
+
 	for (i=0; i<NumFaces; i++)
 	{
 		normal = NormalPlane(Faces[i].iPlane);
@@ -877,6 +881,8 @@ void CHL1LevelMesh::constructMesh()
 		else
 			headVert = Vert(Edges[abs(Surfedge)].vertex[1]);
 		int headVertRef = Edges[Surfedge].vertex[0];
+
+
 
 
 

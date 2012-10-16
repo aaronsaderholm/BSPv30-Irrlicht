@@ -308,10 +308,10 @@ namespace scene
 		};
 		struct vertexNormal
 		{
-			f32 vPosition[3];      // (x, y, z) position.
 			f32 vNormal[3];
 			u32 divCount;
-			//core::vector3df vPosition;
+			core::vector3d<f32> vPosition;
+			core::vector3d<f32> vNormal2;
 		};
 
 
