@@ -289,6 +289,10 @@ void CHL1LevelMesh::calculateVertexNormals()
 			//snprintf( buf, sizeof ( buf ),"Vert %d averaged out from %d normals (%d %d %d)", i, verticesNorm[i].divCount, verticesNorm[i].vNormal[0], verticesNorm[i].vNormal[1], verticesNorm[i].vNormal[2]);
 			//device->getLogger()->log( buf, ELL_INFORMATION);
 		}
+
+
+
+		
 	}
 
 bool CHL1LevelMesh::isEdgeinFace(int edge, int face)
@@ -804,7 +808,8 @@ scene::SMesh** CHL1LevelMesh::buildMesh(s32 num)
 SColor CHL1LevelMesh::ColorGen()
 {
 	srand (device->getTimer()->getRealTime());
-	SColor color(0, (rand() % 255),(rand() % 255),(rand() % 255)) ;
+	SColor color(255, (rand() % 255),(rand() % 255),(rand() % 255)) ;
+	color.setAlpha(255);
 	return color;
 }
 
@@ -845,11 +850,22 @@ void CHL1LevelMesh::constructMesh()
 
 	int headVert;
 	SColor color;
+	color = ColorGen();
+
 	u16 meshbuffercount = 0;
 	for (int f=0; f<NumVertices; f++)
 	{
+		
 		buffer->Vertices.push_back(S3DVertex(verticesNorm[f].vPosition, verticesNorm[f].vNormal2, color, vector2d<f32>(2,2)));
 	}
+
+	video::SMaterial &m = buffer->getMaterial();
+
+	m.MaterialType = video::EMT_SOLID;
+	m.BackfaceCulling = false;
+	m.FrontfaceCulling = false;
+	m.TextureLayer[0].Texture = SceneManager->getVideoDriver()->getTexture ("../../media/rockwall.jpg");
+
 
 	int Surfedge;
 	for (int k=0; k<NumFaces; k++)
@@ -897,9 +913,6 @@ void CHL1LevelMesh::constructMesh()
 		}
 
 	}
-	snprintf( buf, sizeof ( buf ),"All done with Faces! There are # %d verts", meshbuffercount);
-	device->getLogger()->log( buf, ELL_INFORMATION);
-	system("PAUSE");
 
 
 }

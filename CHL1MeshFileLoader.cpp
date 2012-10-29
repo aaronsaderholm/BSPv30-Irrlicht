@@ -56,51 +56,10 @@ IAnimatedMesh* CHL1MeshFileLoader::createMesh(io::IReadFile* file)
 {
 	s32 type = core::isFileExtension ( file->getFileName(), "bsp", "shader", "cfg" );
 	CHL1LevelMesh* q = 0;
-
-	switch ( type )
-	{
-		case 1:
-			q = new CHL1LevelMesh(FileSystem, SceneManager, LoadParam, device);
-
-			// determine real shaders in LoadParam
-			if ( 0 == LoadParam.loadAllShaders )
-			{
-				q->getShader("scripts/common.shader");
-				q->getShader("scripts/sfx.shader");
-				q->getShader("scripts/gfx.shader");
-				q->getShader("scripts/liquid.shader");
-				q->getShader("scripts/models.shader");
-				q->getShader("scripts/walls.shader");
-				//q->getShader("scripts/sky.shader");
-			}
-
-			if ( q->loadFile(file) )
-				return q;
-
-			q->drop();
-			break;
-
-		case 2:
-			q = new CHL1LevelMesh(FileSystem, SceneManager,LoadParam, device);
-			q->getShader( file );
-			return q;
-			break;
-
-		case 3:
-			// load quake 3 loading parameter
-			if ( file->getFileName() == "levelparameter.cfg" )
-			{
-				file->read ( &LoadParam, sizeof ( LoadParam ) );
-			}
-			else
-			{
-				q = new CHL1LevelMesh(FileSystem, SceneManager,LoadParam, device);
-				q->getConfiguration( file );
-				return q;
-			}
-			break;
-	}
-
+	q = new CHL1LevelMesh(FileSystem, SceneManager, LoadParam, device);
+	if ( q->loadFile(file) )
+		return q;
+	q->drop();
 	return 0;
 }
 

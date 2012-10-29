@@ -2,9 +2,28 @@
 #include <iostream>
 #include "driverChoice.h"
 #include "CHL1MeshFileLoader.h"
-
 using namespace irr;
+using namespace video;
+using namespace core;
+using namespace scene;
+using namespace io;
+using namespace gui;
 
+enum
+{
+	// I use this ISceneNode ID to indicate a scene node that is
+	// not pickable by getSceneNodeAndCollisionPointFromRay()
+	ID_IsNotPickable = 0,
+
+	// I use this flag in ISceneNode IDs to indicate that the
+	// scene node can be picked by ray selection.
+	IDFlag_IsPickable = 1 << 0,
+
+	// I use this flag in ISceneNode IDs to indicate that the
+	// scene node can be highlighted.  In this example, the
+	// homonids can be highlighted, but the level mesh can't.
+	IDFlag_IsHighlightable = 1 << 1
+};
 
 
 
@@ -12,7 +31,7 @@ int main()
 {
 
 	IrrlichtDevice *device =
-		createDevice(video::EDT_SOFTWARE, core::dimension2d<u32>(640, 480));
+		createDevice(video::EDT_OPENGL, core::dimension2d<u32>(640, 480));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -25,54 +44,48 @@ int main()
 	smgr->addExternalMeshLoader(hl1_loader);
 	device->getFileSystem()->addFileArchive("../../media/map-20kdm2.pk3");
 	scene::IAnimatedMesh* mesh = smgr->getMesh("chicago.bsp");
+
 	//scene::IAnimatedMesh* mesh = smgr->getMesh("boxmaptest.bsp");
 	scene::ISceneNode* node = 0;
 
-	if (mesh)
-		node = smgr->addOctreeSceneNode(mesh->getMesh(0), 0, -1, 1024);
-//		node = smgr->addMeshSceneNode(mesh->getMesh(0));
+	node = smgr->addOctreeSceneNode(mesh->getMesh(0), 0, IDFlag_IsPickable);
+	//node = smgr->addMeshSceneNode(mesh->getMesh(0));
 
-	/*
-	Because the level was not modelled around the origin (0,0,0), we
-	translate the whole level a little bit. This is done on
-	irr::scene::ISceneNode level using the methods
-	irr::scene::ISceneNode::setPosition() (in this case),
-	irr::scene::ISceneNode::setRotation(), and
-	irr::scene::ISceneNode::setScale().
-	*/
-	if (node)
-		node->setPosition(core::vector3df(-1300,-144,-1249));
 
-	/*
-	Now we only need a camera to look at the Quake 3 map.
-	We want to create a user controlled camera. There are some
-	cameras available in the Irrlicht engine. For example the
-	MayaCamera which can be controlled like the camera in Maya:
-	Rotate with left mouse button pressed, Zoom with both buttons pressed,
-	translate with right mouse button pressed. This could be created with
-	irr::scene::ISceneManager::addCameraSceneNodeMaya(). But for this
-	example, we want to create a camera which behaves like the ones in
-	first person shooter games (FPS) and hence use
-	irr::scene::ISceneManager::addCameraSceneNodeFPS().
-	*/
-	smgr->addCameraSceneNodeFPS();
+	scene::ISceneNode* skybox=smgr->addSkyBoxSceneNode(
+		driver->getTexture("../../media/irrlicht2_up.jpg"),
+		driver->getTexture("../../media/irrlicht2_dn.jpg"),
+		driver->getTexture("../../media/irrlicht2_lf.jpg"),
+		driver->getTexture("../../media/irrlicht2_rt.jpg"),
+		driver->getTexture("../../media/irrlicht2_ft.jpg"),
+		driver->getTexture("../../media/irrlicht2_bk.jpg"));
 
-	/*
-	The mouse cursor needs not be visible, so we hide it via the
-	irr::IrrlichtDevice::ICursorControl.
-	*/
+	scene::ISceneNode* skydome=smgr->addSkyDomeSceneNode(driver->getTexture("../../media/skydome.jpg"),16,8,0.95f,2.0f);
+
+	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, true);
+	scene::ICameraSceneNode* camera =
+		smgr->addCameraSceneNodeFPS(0,100.0f,1.2f);
+
+	camera->setPosition(core::vector3df(2700*2,255*2,2600*2));
+	camera->setTarget(core::vector3df(2397*2,343*2,2700*2));
+	camera->setFarValue(42000.0f);
+
 	device->getCursorControl()->setVisible(false);
 
-	/*
-	We have done everything, so lets draw it. We also write the current
-	frames per second and the primitives drawn into the caption of the
-	window. The test for irr::IrrlichtDevice::isWindowActive() is optional,
-	but prevents the engine to grab the mouse cursor after task switching
-	when other programs are active. The call to
-	irr::IrrlichtDevice::yield() will avoid the busy loop to eat up all CPU
-	cycles when the window is not active.
-	*/
 	int lastFPS = -1;
+
+
+	scene::ITriangleSelector* selector = 0;
+	if (node)
+	{
+		node->setPosition(core::vector3df(-1350,-130,-1400));
+
+		//selector = smgr->createOctreeTriangleSelector(
+			//node->getMesh(1), node, 128);
+		//node->setTriangleSelector(selector);
+		// We're not done with this selector yet, so don't drop it.
+	}
+
 
 	while(device->run())
 	{
@@ -80,7 +93,9 @@ int main()
 		{
 			driver->beginScene(true, true, video::SColor(255,200,200,200));
 			smgr->drawAll();
+			
 			driver->endScene();
+			
 
 			int fps = driver->getFPS();
 
