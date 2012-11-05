@@ -1,7 +1,8 @@
 #include <irrlicht.h>
 #include <iostream>
 #include "driverChoice.h"
-#include "CHL1MeshFileLoader.h"
+
+#include "cBSP30.h"
 using namespace irr;
 using namespace video;
 using namespace core;
@@ -9,21 +10,6 @@ using namespace scene;
 using namespace io;
 using namespace gui;
 
-enum
-{
-	// I use this ISceneNode ID to indicate a scene node that is
-	// not pickable by getSceneNodeAndCollisionPointFromRay()
-	ID_IsNotPickable = 0,
-
-	// I use this flag in ISceneNode IDs to indicate that the
-	// scene node can be picked by ray selection.
-	IDFlag_IsPickable = 1 << 0,
-
-	// I use this flag in ISceneNode IDs to indicate that the
-	// scene node can be highlighted.  In this example, the
-	// homonids can be highlighted, but the level mesh can't.
-	IDFlag_IsHighlightable = 1 << 1
-};
 
 
 
@@ -31,7 +17,7 @@ int main()
 {
 
 	IrrlichtDevice *device =
-		createDevice(video::EDT_OPENGL, core::dimension2d<u32>(640, 480));
+		createDevice(video::EDT_OPENGL, core::dimension2d<u32>(1024, 768));
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -40,16 +26,20 @@ int main()
 	scene::ISceneManager* smgr = device->getSceneManager();
 	io::IFileSystem * filesystem = device->getFileSystem();
 	device->getLogger()->setLogLevel(ELL_INFORMATION);
-	scene::CHL1MeshFileLoader* hl1_loader = new scene::CHL1MeshFileLoader(device);
-	smgr->addExternalMeshLoader(hl1_loader);
+
 	device->getFileSystem()->addFileArchive("../../media/map-20kdm2.pk3");
-	scene::IAnimatedMesh* mesh = smgr->getMesh("chicago.bsp");
+	
+	CBSP30* BSPL = new CBSP30(device);
+	//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("chicago.bsp"));
+	BSPL->loadFile(device->getFileSystem()->createAndOpenFile("chicago.bsp"));
 
 	//scene::IAnimatedMesh* mesh = smgr->getMesh("boxmaptest.bsp");
 	scene::ISceneNode* node = 0;
 
-	node = smgr->addOctreeSceneNode(mesh->getMesh(0), 0, IDFlag_IsPickable);
+	node = smgr->addOctreeSceneNode(BSPL->getMesh());
 	//node = smgr->addMeshSceneNode(mesh->getMesh(0));
+
+
 
 
 	scene::ISceneNode* skybox=smgr->addSkyBoxSceneNode(
@@ -63,30 +53,13 @@ int main()
 	scene::ISceneNode* skydome=smgr->addSkyDomeSceneNode(driver->getTexture("../../media/skydome.jpg"),16,8,0.95f,2.0f);
 
 	driver->setTextureCreationFlag(video::ETCF_CREATE_MIP_MAPS, true);
-	scene::ICameraSceneNode* camera =
-		smgr->addCameraSceneNodeFPS(0,100.0f,1.2f);
-
-	camera->setPosition(core::vector3df(2700*2,255*2,2600*2));
-	camera->setTarget(core::vector3df(2397*2,343*2,2700*2));
-	camera->setFarValue(42000.0f);
+	smgr->addCameraSceneNodeFPS();
 
 	device->getCursorControl()->setVisible(false);
+	node->setMaterialFlag(EMF_LIGHTING, false);
+
 
 	int lastFPS = -1;
-
-
-	scene::ITriangleSelector* selector = 0;
-	if (node)
-	{
-		node->setPosition(core::vector3df(-1350,-130,-1400));
-
-		//selector = smgr->createOctreeTriangleSelector(
-			//node->getMesh(1), node, 128);
-		//node->setTriangleSelector(selector);
-		// We're not done with this selector yet, so don't drop it.
-	}
-
-
 	while(device->run())
 	{
 		if (device->isWindowActive())
