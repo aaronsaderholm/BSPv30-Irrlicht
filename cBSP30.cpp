@@ -40,15 +40,13 @@ CBSP30::CBSP30(IrrlichtDevice* newdevice)
 {
 
 	device = newdevice;
-	
-
-
 	Driver = device->getVideoDriver();
 	if (Driver)
 		Driver->grab();
 	FileSystem = device->getFileSystem();
 	if (FileSystem)
 		FileSystem->grab();
+
 
 	// load default shaders
 
@@ -84,8 +82,11 @@ CBSP30::~CBSP30()
 bool CBSP30::loadFile(io::IReadFile* file)
 {
 	if (!file)
+	{
+		printf( buf, sizeof ( buf ),"Cannot load file");
+		device->getLogger()->log( buf, ELL_INFORMATION);
 		return false;
-
+	}
 	LevelName = file->getFileName();
 
 	file->read(&header, sizeof(tBSPHeader));
@@ -95,7 +96,7 @@ bool CBSP30::loadFile(io::IReadFile* file)
 
 	
 	// load everything
-	loadEntities(&header.lumps[kEntities], file);			// load the entities
+	//loadEntities(&header.lumps[kEntities], file);			// load the entities
 	loadPlanes(&header.lumps[kPlanes], file);
 	assert(_CrtCheckMemory());
 	// Load the Planes of the BSP
@@ -103,8 +104,8 @@ bool CBSP30::loadFile(io::IReadFile* file)
 	loadVerts(&header.lumps[kVertices], file);	
 	assert(_CrtCheckMemory());
 				// Load the faces
-	loadNodes(&header.lumps[kNodes], file);				// load the Nodes of the BSP
-	loadLeafs(&header.lumps[kLeafs], file);				// load the Leafs of the BSP
+	//loadNodes(&header.lumps[kNodes], file);				// load the Nodes of the BSP
+	//loadLeafs(&header.lumps[kLeafs], file);				// load the Leafs of the BSP
 	loadEdges(&header.lumps[kEdges], file);
 		
 	loadSurfedges(&header.lumps[kSurfedges], file);
@@ -113,11 +114,13 @@ bool CBSP30::loadFile(io::IReadFile* file)
 	//loadLeafFaces(&Lumps[kLeafFaces], file);		// load the Faces of the Leafs of the BSP
 	//loadVisData(&Lumps[kVisData], file);			// load the visibility data of the clusters
 	loadModels(&header.lumps[kModels], file);	
+	loadTexinfo(&header.lumps[kTexinfo], file);
+	//loadMiptex(&header.lumps[kTextures], file);
 	assert(_CrtCheckMemory());// load the models
 	//loadLeafBrushes(&Lumps[kLeafBrushes], file);	// load the brushes of the leaf
 	//loadFogs(&Lumps[kFogs], file );					// load the fogs
 	//loadTextures();
-	calculateVertexNormals();
+	//calculateVertexNormals();
 	printLoaded();
 	constructMesh();
 	//cleanMeshes();
@@ -134,7 +137,7 @@ bool CBSP30::loadFile(io::IReadFile* file)
 */
 void CBSP30::cleanLoader ()
 {
-	delete [] Textures; Textures = 0;
+	//delete [] Textures; Textures = 0;
 	//delete [] LightMaps; LightMaps = 0;
 	delete [] Vertices; Vertices = 0;
 	delete [] Faces; Faces = 0;
@@ -152,7 +155,6 @@ void CBSP30::printLoaded()
 
 			snprintf( buf, sizeof ( buf ),
 			"cBSP30 created %d faces, %d vertices",
-
 			NumFaces,
 			NumVertices
 			);
@@ -168,13 +170,76 @@ void CBSP30::printLoaded()
 
 void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
 {
-	NumTextures = l->length / sizeof(tBSPTexture);
-	if ( !NumTextures )
-		return;
-	Textures = new tBSPTexture[NumTextures];
+	Mipheader = new tBSPMipheader;
+	file->seek(l->offset);
+	file->read(Mipheader, sizeof(s32));
+	NumTextures = Mipheader->nMipTextures;
+	Mipheader->nMipOffsets = new s32[NumTextures];
+	file->read(Mipheader->nMipOffsets, (sizeof(s32) * NumTextures));
+
+	snprintf( buf, sizeof ( buf ),
+		"NumTextures: %d", NumTextures);
+	device->getLogger()->log(buf, ELL_INFORMATION);
+	system("PAUSE");
+	assert(_CrtCheckMemory());
+	for (s32 i=0; i < NumTextures; i++)
+	{
+
+		snprintf( buf, sizeof ( buf ),
+			"Offset %d : %d", i, Mipheader->nMipOffsets[i]);
+		device->getLogger()->log(buf, ELL_INFORMATION);
+
+	}
+
+
+	/*
+	Textures = new tBSPTexture;
+	u32 offsetAlloc  = ((l->length / sizeof(tBSPTexture)) - (NumTextures*sizeof(u32)));
 
 	file->seek(l->offset);
-	file->read(Textures, l->length);
+	file->read(Textures, sizeof(tBSPTexture));
+	s32 nMipTextures= Textures->nMipTextures;
+	tBSPMiptexOffset = new s32[Textures->nMipTextures];
+
+	assert(_CrtCheckMemory());
+
+	file->seek(l->offset + (sizeof(tBSPTexture)));
+	assert(_CrtCheckMemory());
+	file->read(tBSPMiptexOffset, (sizeof(tBSPMiptexOffset) * nMipTextures));
+
+	assert(_CrtCheckMemory());
+	//Miptex.resize(Textures->nMipTextures);
+	//Miptex = new tBSPMiptex[Textures->nMipTextures];
+	
+	//snprintf( buf, sizeof ( buf ),
+	//	"fadsfkjsdf %u", nMipTextures);
+
+
+
+	for (u32 i=0; i < nMipTextures; i++)
+	{
+		//tBSPMiptex* heyoverhere = new tBSPMiptex;
+		assert(_CrtCheckMemory());
+
+
+
+		/*file->seek(l->offset + (tBSPMiptexOffset[i] * sizeof(char)));
+		assert(_CrtCheckMemory());
+		file->read(heyoverhere, sizeof(tBSPMiptex));
+		assert(_CrtCheckMemory());
+		Miptex.push_back(heyoverhere);
+		snprintf( buf, sizeof ( buf ),
+			"%d / %d: %d", i, nMipTextures, tBSPMiptexOffset[i]);
+		device->getLogger()->log(buf, ELL_INFORMATION);
+
+		system("PAUSE");
+		
+
+	}
+
+	*/
+
+
 
 }
 
@@ -191,6 +256,8 @@ void CBSP30::loadLightmaps(tBSPLump* l, io::IReadFile* file)
 	file->seek(l->offset);
 	file->read(LightMaps, l->length);*/
 }
+
+
 
 void CBSP30::loadVerts(tBSPLump* l, io::IReadFile* file)
 {
@@ -214,60 +281,6 @@ void CBSP30::loadFaces(tBSPLump* l, io::IReadFile* file)
 	file->read(Faces, l->length);
 }
 
-void CBSP30::calculateVertexNormals()
-	{
-		verticesNorm = new vertexNormal[NumVertices];
-		for (int i=0; i < NumVertices; i++)
-		{
-			verticesNorm[i].vPosition = vector3df(Vertices[i].vPosition[0], Vertices[i].vPosition[1], Vertices[i].vPosition[2]);
-			verticesNorm[i].divCount = 0;
-			//snprintf( buf, sizeof ( buf ),"X %f Y %f Z %f", Vertices[i].vPosition[0], Vertices[i].vPosition[1], Vertices[i].vPosition[2]);
-			//device->getLogger()->log( buf, ELL_INFORMATION);
-		}
-		f32 planeNormal[3];
-		for (int j=1; j < NumFaces; j++)
-		{
-			int invert;
-			if (Faces[j].nPlaneSide != 0)
-				invert= -1;
-			else
-				invert= 1;
-			planeNormal[0] = Planes[Faces[j].iPlane].vNormal[0] * invert;
-			planeNormal[1] = Planes[Faces[j].iPlane].vNormal[1] * invert;
-			planeNormal[2] = Planes[Faces[j].iPlane].vNormal[2] * invert;
-			int min = Faces[j].iFirstEdge;
-			int max = Faces[j].iFirstEdge + Faces[j].nEdges;
-			for (int k= min+1; k < max; k++)
-			{
-				int edgev1 = Edges[abs(Surfedges[k])].vertex[0];
-				int edgev2 = Edges[abs(Surfedges[k])].vertex[1];
-				verticesNorm[edgev1].vNormal[0] = verticesNorm[edgev1].vNormal[0] + planeNormal[0];
-				verticesNorm[edgev1].vNormal[1] = verticesNorm[edgev1].vNormal[1] + planeNormal[1];
-				verticesNorm[edgev1].vNormal[2] = verticesNorm[edgev1].vNormal[2] + planeNormal[2];
-				verticesNorm[edgev1].divCount++;
-
-				verticesNorm[edgev2].vNormal[0] = verticesNorm[edgev2].vNormal[0] + planeNormal[0];
-				verticesNorm[edgev2].vNormal[1] = verticesNorm[edgev2].vNormal[1] + planeNormal[1];
-				verticesNorm[edgev2].vNormal[2] = verticesNorm[edgev2].vNormal[2] + planeNormal[2];
-				verticesNorm[edgev2].divCount++;
-			}
-		}
-
-		for (int i=0; i<NumVertices; i++)
-		{
-			verticesNorm[i].vNormal2 = vector3df(
-												(verticesNorm[i].vNormal[0] / verticesNorm[i].divCount), 
-												(verticesNorm[i].vNormal[1] / verticesNorm[i].divCount), 
-												(verticesNorm[i].vNormal[2] / verticesNorm[i].divCount));
-			//snprintf( buf, sizeof ( buf ),"Vert %d averaged out from %d normals (%d %d %d)", i, verticesNorm[i].divCount, verticesNorm[i].vNormal[0], verticesNorm[i].vNormal[1], verticesNorm[i].vNormal[2]);
-			//device->getLogger()->log( buf, ELL_INFORMATION);
-		}
-
-
-
-		
-	}
-
 bool CBSP30::isEdgeinFace(int edge, int face)
 {
 	
@@ -277,10 +290,6 @@ bool CBSP30::isEdgeinFace(int edge, int face)
 		return true;
 	return false;	
 }
-
-
-
-
 
 void CBSP30::loadPlanes(tBSPLump* l, io::IReadFile* file)
 {
@@ -347,6 +356,16 @@ void CBSP30::loadModels(tBSPLump* l, io::IReadFile* file)
 	file->read(Models, l->length);
 }
 
+void CBSP30::loadTexinfo(tBSPLump* l, io::IReadFile* file)
+{
+	NumTexinfo = l->length / sizeof(tBSPTexInfo);
+	if(!NumTexinfo)
+		return;
+	TexInfo = new tBSPTexInfo[NumTexinfo];
+	file->seek( l->offset );
+	file->read(TexInfo, l->length);
+}
+
 
 
 /*
@@ -357,12 +376,13 @@ void CBSP30::loadModels(tBSPLump* l, io::IReadFile* file)
 
 SColor CBSP30::ColorGen()
 {
-	srand (device->getTimer()->getRealTime());
-	SColor color(255, (rand() % 255),(rand() % 255),(rand() % 255)) ;
-	//SColor color(255,255,255,0);
 
-	//color.setAlpha(255);
+
+	//video::SColor color( 255, 255, 255, 255 );
+	SColor color(255,xor128(),xor128(),xor128());
+
 	return color;
+	
 }
 
 vector3df CBSP30::Vert(int vert)
@@ -391,85 +411,94 @@ vector3df CBSP30::NormalPlane(int plane)
 
 void CBSP30::constructMesh()
 {
-
-
-
 	// go through all faces and add them to the buffer.
 	int allocationValue = NumVertices;
-	SMeshBuffer *buffer = 0;
-	
-	buffer->Vertices.reallocate(NumVertices+4);
-	int headVert;
-	SColor color;
-	
-
-	u16 meshbuffercount = 0;
-	for (int f=0; f<NumVertices; f++)
-	{
-		
-		buffer->Vertices.push_back(S3DVertex(verticesNorm[f].vPosition, verticesNorm[f].vNormal2, color, vector2d<f32>(2,2)));
-		color = ColorGen();
-	}
-
-
-
-	video::SMaterial &m = buffer->getMaterial();
-
-	m.MaterialType = video::EMT_SOLID;
-	m.BackfaceCulling = false;
-	m.FrontfaceCulling = false;
-	m.Wireframe = true;
-
-
-
+	SMeshBuffer *buffer = 0;	
+	SColor color;	
 	int Surfedge;
-	
 
-	for (int z=0; z< NumModels; z++)
-	{
-			Mesh.push_back(new SMesh);
-			
-			for (int k=0; k<(Models[z].iFirstFace + Models[z].nFaces); k++)
+	Mesh.clear();
+	Mesh.push_back(new SMesh);
+	//for (int z=0; z< 1; z++)
+	//{
+			for (int k=0; k<NumFaces; k++)
 			{
-					buffer = new SMeshBuffer();
-					Mesh[z]->addMeshBuffer(buffer);
-					Surfedge = Surfedges[Faces[k].iFirstEdge];
-					if(Surfedge > 0)
-						headVert = Edges[Surfedge].vertex[0];
-					else
-						headVert = Edges[abs(Surfedge)].vertex[1];
-					int headVertRef = Edges[Surfedge].vertex[0];
-					u32 indiceIndex[3];
-					indiceIndex[0] = headVert;
 
-					//printFaces(i);
-					for (int j=1; j <  ((Faces[k].nEdges)-1); j++)
+					int vertRef;
+					buffer = 0;
+					buffer = new SMeshBuffer();
+					Mesh.back()->addMeshBuffer(buffer);
+
+					SColor color = ColorGen();
+					buffer->Material.Lighting = false;
+					buffer->Material.BackfaceCulling = true;
+					buffer->Material.FrontfaceCulling = false;
+					buffer->Material.EmissiveColor = color;
+					f32 sx=1, sy=1;
+					buffer->Material.getTextureMatrix(0).setTextureScale(2,2);
+					//buffer->getMaterial().Wireframe = true;
+					//buffer->Material.MaterialType = EMT_SOLID;
+					//buffer->Material.TextureLayer[0].TextureWrapV = video::ETC_CLAMP;
+					//buffer->Material.TextureLayer[0].TextureWrapU = video::ETC_CLAMP;
+					//buffer->Material.setTexture(0, Driver->getTexture("../../media/irrlichtlogo2.png"));
+					//buffer->Material.setTexture(1, Driver->getTexture("../../media/irrlichtlogo2.png"));
+					buffer->Material.setTexture(0, Driver->getTexture("../../media/wall.jpg"));
+					//buffer->Material.setTexture(3, Driver->getTexture("../../media/rockwall.jpg"));
+					Mesh.back()->setDirty();
+					core::vector3d<f32> normal;
+					int planeRef = Faces[k].iPlane;
+					if (Faces[k].nPlaneSide = 0)
+						normal = vector3df(Planes[planeRef].vNormal[0], Planes[planeRef].vNormal[1], Planes[planeRef].vNormal[2]);
+					else
+						normal = vector3df(Planes[planeRef].vNormal[0] *-1, Planes[planeRef].vNormal[1]*-1, Planes[planeRef].vNormal[2]*-1);
+					Surfedge = Surfedges[Faces[k].iFirstEdge];
+					core::vector3d<f32> v3dPosition;
+					if(Surfedge > 0)
+							vertRef = Edges[abs(Surfedge)].vertex[0];
+					else
+							vertRef = Edges[abs(Surfedge)].vertex[1];
+					v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+					buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, vector2d<f32>(0,1)));
+					//lightmap
+					for (int j=1; j <  ((Faces[k].nEdges-1)); j++)
 					{
-			
-						Surfedge = ((Surfedges[Faces[k].iFirstEdge]) + j);
+						Surfedge = ((Surfedges[Faces[k].iFirstEdge + j]));
 						if(Surfedge > 0)
 						{
+							vertRef = Edges[abs(Surfedge)].vertex[0];
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 
-							indiceIndex[1] = Edges[Surfedge].vertex[0];
-							indiceIndex[2] = Edges[Surfedge].vertex[1];
-							//snprintf( buf, sizeof ( buf ),"Triangle %d %d %d", headVertRef, Edges[Surfedge].vertex[0],  Edges[Surfedge].vertex[1]);
+							vertRef = Edges[abs(Surfedge)].vertex[1];
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 						}
 						else
 						{
-							Surfedge = abs(Surfedge);
-							indiceIndex[1] = Edges[Surfedge].vertex[1];
-							indiceIndex[2] = Edges[Surfedge].vertex[0];
-							//snprintf( buf, sizeof ( buf ),"Triangle %d %d %d", headVertRef, Edges[Surfedge].vertex[1],  Edges[Surfedge].vertex[0]);
+							vertRef = Edges[abs(Surfedge)].vertex[1];
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
+
+							vertRef = Edges[abs(Surfedge)].vertex[0];
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 						}
-						buffer->Indices.push_back(indiceIndex[0]);
-						buffer->Indices.push_back(indiceIndex[1]);
-						buffer->Indices.push_back(indiceIndex[2]);
-						meshbuffercount = meshbuffercount+3;
-						//device->getLogger()->log( buf, ELL_INFORMATION);
+
+						
+						
+						buffer->Indices.push_back(buffer->Vertices.size()-1);;
+						buffer->Indices.push_back(buffer->Vertices.size()-2);
+						buffer->Indices.push_back(0);
+
+
 					}
+
+
+
 			}
 
-	}
+
+	
 	
 
 }
@@ -478,12 +507,12 @@ irr::scene::SMesh* CBSP30::getMesh()
 {
 	//if model[index] exists, return it.  if not, don't ect
 	if(!Mesh.empty())
-		return Mesh[0];
+		return Mesh.back();
 	else 
 		return 0;
 }
 
-irr::scene::SMesh* CBSP30::getMesh(int index)
+irr::scene::SMesh* CBSP30::getMesh(u32 index)
 {
 	//if model[index] exists, return it.  if not, don't ect
 	if (0 <= index  &&  index < Mesh.size())
@@ -499,6 +528,31 @@ void CBSP30::loadTextures()
 {
 	return;	
 }
+u32 CBSP30::xor128(void) {
+	static u32 x = 123456789;
+	static u32 y = 362436069;
+	static u32 z = 521288629;
+	static u32 w = 88675123;
+	u32 t;
+
+	t = x ^ (x << 11);
+	x = y; y = z; z = w;
+	return (w = w ^ (w >> 19) ^ (t ^ (t >> 8))) % 255;
+}
+
+core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex)
+{
+	vector3df vert = vector3df(Vertices[vertIndex].vPosition[0], Vertices[vertIndex].vPosition[1],Vertices[vertIndex].vPosition[2]);
+	u32 texRef = Faces[faceIndex].textureID;
+	vector3df vectorS = vector3df(TexInfo[texRef].vectorS[0], TexInfo[texRef].vectorS[1], TexInfo[texRef].vectorS[2]);
+	vector3df vectorT = vector3df(TexInfo[texRef].vectorT[0], TexInfo[texRef].vectorT[1], TexInfo[texRef].vectorT[2]);
+	f32 s, t;
+	s = (vert.dotProduct(vectorS) + TexInfo[texRef].fShiftS);
+	t = (vert.dotProduct(vectorT) + TexInfo[texRef].fShiftT);
+	return vector2df(s, t);
+}
+
 
 }
 }
+

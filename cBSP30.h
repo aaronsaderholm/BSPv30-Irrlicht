@@ -75,7 +75,7 @@ namespace irr
 
 			bool loadFile(io::IReadFile* file);
 			irr::scene::SMesh* getMesh();
-			irr::scene::SMesh* getMesh(int index);
+			irr::scene::SMesh* getMesh(u32 index);
 
 
 		private:
@@ -147,10 +147,17 @@ namespace irr
 				f32 d;              // The plane distance from origin
 				s32 ntype;			
 			};
-			struct tBSPTexture
+
+			struct tBSPMipheader
 			{
-				u32 nMipTextures; //Number of BSPMIXTEX Structures?
+				s32 nMipTextures; //Number of BSPMIXTEX Structures?
+				s32 *nMipOffsets;
 			};
+
+
+
+			
+
 			struct tBSPVertex
 			{
 				f32 vPosition[3];      // (x, y, z) position.
@@ -169,19 +176,37 @@ namespace irr
 				s16 mins[3], maxs[3];    //bounding box position
 				u16 firstFace, nFaces;	//index and count into faces
 			};
-			struct tTexInfo
+			struct tBSPTexInfo
 			{
-				f32 vs[3];
-				f32 fSShift;	//texture shift in S direction
-				f32 vt[3];
-				f32 fTShift;	//texture shift in T direction
+				f32 vectorS[3];
+				f32 fShiftS;	//texture shift in S direction
+				f32 vectorT[3];
+				f32 fShiftT;	//texture shift in T direction
 				u32	iMiptex;	//Index into textures array
 				u32 nFlags;		//Texture flags
 			};
+
+			s32 *tBSPMiptexOffset;
+
+			#define MAXTEXTURENAME 16
+			#define MIPLEVELS 4
+
+
+			struct tBSPMiptex
+			{
+				char szName[MAXTEXTURENAME];
+				u32 nWidth, nHeight;
+				u32 nOffsets[MIPLEVELS];
+			};
+
+
 			struct tBSPEdges
 			{
 				u16 vertex[2];
 			};
+
+
+
 			typedef s32 tBSPSurfedges;
 			typedef u16 tBSPMarkSurfaces;	//Array/table for marksurfaces index in the leaf to actual face index
 			struct tBSPFace
@@ -219,22 +244,17 @@ namespace irr
 				u8 directional[3]; // This is the directional color in RGB
 				u8 direction[2];   // The direction of the light: [phi,theta]
 			};
-			struct vertexNormal
-			{
-				f32 vNormal[3];
-				u32 divCount;
-				core::vector3d<f32> vPosition;
-				core::vector3d<f32> vNormal2;
-			};
+
 			core::array< STexShader > Tex;
 			core::array<video::ITexture*> Lightmap;
 			tBSPLump Lumps[kMaxLumps];
 			tBSPHeader header;
 			tBSPPlane* Planes;
-			tBSPTexture* Textures;
+			tBSPMipheader* Mipheader;
+			//u32* Textures;
 			tBSPVertex* Vertices;
-			vertexNormal* verticesNorm;
-
+			//tBSPMiptex* Miptex[];
+			std::vector <tBSPMiptex*> Miptex;
 			tBSPNode* Nodes;
 			tBSPFace* Faces;
 			tBSPLightmap* LightMaps;
@@ -242,6 +262,8 @@ namespace irr
 			tBSPEdges* Edges;
 			tBSPSurfedges* Surfedges;
 			tBSPModel* Models;
+			tBSPTexInfo* TexInfo;
+
 
 			s32 NumPlanes;
 			s32 NumTextures;
@@ -253,6 +275,8 @@ namespace irr
 			s32 NumEdges;
 			s32 NumSurfedges;
 			s32 NumModels;
+			s32 NumTexinfo;
+			s32 NumMiptex;
 
 
 			scene::SMesh** BrushEntities;
@@ -264,21 +288,26 @@ namespace irr
 			void loadNodes      (tBSPLump* l, io::IReadFile* file); // load the Nodes of the BSP
 			void loadFaces      (tBSPLump* l, io::IReadFile* file); // Load the faces
 			void loadLightmaps(tBSPLump* l, io::IReadFile* file);
+			void loadTexinfo   (tBSPLump* l, io::IReadFile* file); // Load the load the texinfo?
 			void loadLeafs      (tBSPLump* l, io::IReadFile* file); // load the Leafs of the BSP
 			void loadEdges  (tBSPLump* l, io::IReadFile* file); // load the Faces of the Leafs of the BSP
 			void loadSurfedges (tBSPLump* l, io::IReadFile* file);
 			void loadModels     (tBSPLump* l, io::IReadFile* file); // load the models
+			void loadMiptex(tBSPLump* l, io::IReadFile* file);
 			//void loadTexinfo    (tBSPLump* l, io::IReadFile* file); // load the visibility data of the clusters
 			//void loadVisData    (tBSPLump* l, io::IReadFile* file); // load the visibility data of the clusters
+			u32 colorRed;
+			u32 colorGreen;
+			u32 colorBlue;
 
 
-			void calculateVertexNormals();
-			int returnNormalsfromEdge();
+
 			void printLoaded();
 			video::SColor ColorGen();
 			void constructMesh();
 			void loadTextures();
-
+			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex);
+			u32 xor128(void);
 			scene::SMesh** buildMesh(s32 num);
 
 			core::vector3df Vert(int vert);//Returns vector3D from Vertex Lump
@@ -289,31 +318,17 @@ namespace irr
 				s32 vertexcolor ) const;
 
 			bool isEdgeinFace(int edge, int face);
-			vector<scene::SMesh*> Mesh;
+			std::vector <SMesh*> Mesh;
 			video::IVideoDriver* Driver;
 			core::stringc LevelName;
 			c8 buf[256];
-
-
-
-
-
-
-
-
-
 			struct SToBuffer
 			{
 				s32 takeVertexColor;
 				u32 index;
 			};
-
-
 			void cleanLoader ();
 			void calcBoundingBoxes();
-
-
-
 		};
 
 	} // end namespace scene
