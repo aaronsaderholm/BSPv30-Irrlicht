@@ -26,7 +26,7 @@ int main()
 	c8 buf[256];
 
 	CBSP30* BSPL = new CBSP30(device);
-	if (device->getFileSystem()->addFileArchive("../../media/map-20kdm2.pk3"))
+	if (device->getFileSystem()->addFileArchive("../../media/hlbsp.pk3"))
 		//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("boxmaptest.bsp"));
 		BSPL->loadFile(device->getFileSystem()->createAndOpenFile("chicago.bsp"));
 
@@ -67,7 +67,7 @@ int main()
 	node->setMaterialFlag(EMF_LIGHTING, false);
 	device->getCursorControl()->setVisible(false);
 	//node->setMaterialFlag(EMF_LIGHTING, false);
-	node->setRotation(vector3df(-90,0,0));
+	//node->setRotation(vector3df(-90,0,0));
 
 	int lastFPS = -1;
 	int fps = 0;
@@ -95,7 +95,7 @@ int main()
 
 				if(axis > 360)
 					axis = 0;
-			node->setRotation(vector3df(-90,axis,0));
+			//node->setRotation(vector3df(-90,axis,0));
 
 			fps = driver->getFPS();
 

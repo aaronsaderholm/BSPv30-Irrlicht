@@ -195,9 +195,16 @@ namespace irr
 			struct tBSPMiptex
 			{
 				char szName[MAXTEXTURENAME];
-				u32 nWidth, nHeight;
-				u32 nOffsets[MIPLEVELS];
+				u32 width, height;
+				u32 mipmap[MIPLEVELS];
 			};
+
+			struct miptex_halflife
+			{
+				c8  name[16];
+				u32 width, height;
+				u32 mipmap[4];		// four mip maps stored
+			} PACK_STRUCT;
 
 
 			struct tBSPEdges
@@ -263,7 +270,7 @@ namespace irr
 			tBSPSurfedges* Surfedges;
 			tBSPModel* Models;
 			tBSPTexInfo* TexInfo;
-
+			std::vector<video::ITexture*> texArray;
 
 			s32 NumPlanes;
 			s32 NumTextures;
@@ -309,7 +316,7 @@ namespace irr
 			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex);
 			u32 xor128(void);
 			scene::SMesh** buildMesh(s32 num);
-
+			//video::IImage* loadImage(irr::io::IReadFile* file, u64 seek) const;
 			core::vector3df Vert(int vert);//Returns vector3D from Vertex Lump
 
 			core::vector3df NormalPlane(int plane);//Returns vector3D from Plane Lump

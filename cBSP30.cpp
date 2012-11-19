@@ -177,19 +177,41 @@ void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
 	Mipheader->nMipOffsets = new s32[NumTextures];
 	file->read(Mipheader->nMipOffsets, (sizeof(s32) * NumTextures));
 
-	snprintf( buf, sizeof ( buf ),
+	/*snprintf( buf, sizeof ( buf ),
 		"NumTextures: %d", NumTextures);
-	device->getLogger()->log(buf, ELL_INFORMATION);
-	system("PAUSE");
+	device->getLogger()->log(buf, ELL_INFORMATION);*/
+	//system("PAUSE");
 	assert(_CrtCheckMemory());
+	texArray.resize(NumTextures);
 	for (s32 i=0; i < NumTextures; i++)
 	{
+
+		long buffersize = (l->length - Mipheader->nMipOffsets[i]);
+		c8* buffer = new c8[buffersize];
+		file->seek(Mipheader->nMipOffsets[i]);
+		file->read(buffer, buffersize);
+		io::IReadFile* memoryFile = device->getFileSystem()->createMemoryReadFile(buffer, buffersize, "foo.wal2", true);
+
+		//video::IImage* image = Driver->createImageFromFile(memoryFile);
+		video::IImage* image = Driver->createImageFromFile("../../media/wall.jpg");
+		image->lock();
+		video::ITexture* texture = Driver->addTexture("foo.wal2", image);
+		texture->lock();
+		texture->grab();
+
+			texArray[i] = texture;
+		assert(_CrtCheckMemory());
+
+
+
 
 		snprintf( buf, sizeof ( buf ),
 			"Offset %d : %d", i, Mipheader->nMipOffsets[i]);
 		device->getLogger()->log(buf, ELL_INFORMATION);
 
 	}
+
+	
 
 
 	/*
@@ -419,8 +441,46 @@ void CBSP30::constructMesh()
 
 	Mesh.clear();
 	Mesh.push_back(new SMesh);
+
+	/*
+	for(int i=0; i < NumTextures; i++)
+	{
+		
+		
+
+		buffer = 0;
+		buffer = new SMeshBuffer();
+		Mesh.back()->addMeshBuffer(buffer);
+		//buffer->Material.setTexture(0, Driver->getTexture("../../media/irrlichtlogo2.png"));
+		buffer->Material.TextureLayer[0].TextureWrapV = video::ETC_CLAMP;
+		buffer->Material.TextureLayer[0].TextureWrapU = video::ETC_CLAMP;
+		buffer->Material.setTexture(0, texArray[i]);
+		buffer->Material.BackfaceCulling = false;
+		buffer->Material.FrontfaceCulling = false;
+		buffer->Vertices.push_back(S3DVertex(vector3df(0 + (50*i), 0, 0), vector3df(0, 0, 1), color, vector2df(0, 0)));
+		buffer->Vertices.push_back(S3DVertex(vector3df(0 + (50*i), 50 , 0), vector3df(0, 0, 1), color, vector2df(0, 1)));
+		buffer->Vertices.push_back(S3DVertex(vector3df(50 + (50*i), 50, 0), vector3df(0, 0, 1), color, vector2df(1, 1)));
+		buffer->Vertices.push_back(S3DVertex(vector3df(50 + (50*i), 0, 0), vector3df(0, 0, 1), color, vector2df(1, 0)));
+
+		buffer->Indices.push_back(0);
+		buffer->Indices.push_back(1);
+		buffer->Indices.push_back(2);
+		
+		buffer->Indices.push_back(0);
+		buffer->Indices.push_back(2);
+		buffer->Indices.push_back(3);
+
+
+	}*/
+
+
+
 	//for (int z=0; z< 1; z++)
 	//{
+
+	
+
+			
 			for (int k=0; k<NumFaces; k++)
 			{
 
@@ -442,22 +502,24 @@ void CBSP30::constructMesh()
 					//buffer->Material.TextureLayer[0].TextureWrapU = video::ETC_CLAMP;
 					//buffer->Material.setTexture(0, Driver->getTexture("../../media/irrlichtlogo2.png"));
 					//buffer->Material.setTexture(1, Driver->getTexture("../../media/irrlichtlogo2.png"));
-					buffer->Material.setTexture(0, Driver->getTexture("../../media/wall.jpg"));
-					//buffer->Material.setTexture(3, Driver->getTexture("../../media/rockwall.jpg"));
+					//buffer->Material.setTexture(0, Driver->getTexture("../../media/wall.jpg"));
+					buffer->Material.setTexture(0, Driver->getTexture("../../media/rockwall.jpg"));
 					Mesh.back()->setDirty();
 					core::vector3d<f32> normal;
+
+
 					int planeRef = Faces[k].iPlane;
 					if (Faces[k].nPlaneSide = 0)
-						normal = vector3df(Planes[planeRef].vNormal[0], Planes[planeRef].vNormal[1], Planes[planeRef].vNormal[2]);
+						normal = vector3df(Planes[planeRef].vNormal[0], Planes[planeRef].vNormal[2], Planes[planeRef].vNormal[1]);
 					else
-						normal = vector3df(Planes[planeRef].vNormal[0] *-1, Planes[planeRef].vNormal[1]*-1, Planes[planeRef].vNormal[2]*-1);
+						normal = vector3df(Planes[planeRef].vNormal[0] *-1, Planes[planeRef].vNormal[2]*-1, Planes[planeRef].vNormal[1]*-1);
 					Surfedge = Surfedges[Faces[k].iFirstEdge];
 					core::vector3d<f32> v3dPosition;
 					if(Surfedge > 0)
 							vertRef = Edges[abs(Surfedge)].vertex[0];
 					else
 							vertRef = Edges[abs(Surfedge)].vertex[1];
-					v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+					v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[2], Vertices[vertRef].vPosition[1]);
 					buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, vector2d<f32>(0,1)));
 					//lightmap
 					for (int j=1; j <  ((Faces[k].nEdges-1)); j++)
@@ -466,28 +528,29 @@ void CBSP30::constructMesh()
 						if(Surfedge > 0)
 						{
 							vertRef = Edges[abs(Surfedge)].vertex[0];
-							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[2], Vertices[vertRef].vPosition[1]);
 							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 
 							vertRef = Edges[abs(Surfedge)].vertex[1];
-							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[2], Vertices[vertRef].vPosition[1]);
 							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 						}
 						else
 						{
 							vertRef = Edges[abs(Surfedge)].vertex[1];
-							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[2], Vertices[vertRef].vPosition[1]);
 							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 
 							vertRef = Edges[abs(Surfedge)].vertex[0];
-							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[1], Vertices[vertRef].vPosition[2]);
+							v3dPosition = vector3df(Vertices[vertRef].vPosition[0], Vertices[vertRef].vPosition[2], Vertices[vertRef].vPosition[1]);
 							buffer->Vertices.push_back(S3DVertex(v3dPosition, normal, color, UVCoord(vertRef, k)));
 						}
 
 						
 						
-						buffer->Indices.push_back(buffer->Vertices.size()-1);;
+						
 						buffer->Indices.push_back(buffer->Vertices.size()-2);
+						buffer->Indices.push_back(buffer->Vertices.size()-1);
 						buffer->Indices.push_back(0);
 
 
@@ -542,15 +605,87 @@ u32 CBSP30::xor128(void) {
 
 core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex)
 {
-	vector3df vert = vector3df(Vertices[vertIndex].vPosition[0], Vertices[vertIndex].vPosition[1],Vertices[vertIndex].vPosition[2]);
+	vector3df vert = vector3df(Vertices[vertIndex].vPosition[0], Vertices[vertIndex].vPosition[2],Vertices[vertIndex].vPosition[1]);
 	u32 texRef = Faces[faceIndex].textureID;
-	vector3df vectorS = vector3df(TexInfo[texRef].vectorS[0], TexInfo[texRef].vectorS[1], TexInfo[texRef].vectorS[2]);
-	vector3df vectorT = vector3df(TexInfo[texRef].vectorT[0], TexInfo[texRef].vectorT[1], TexInfo[texRef].vectorT[2]);
+	vector3df vectorS = vector3df(TexInfo[texRef].vectorS[0], TexInfo[texRef].vectorS[2], TexInfo[texRef].vectorS[1]);
+	vector3df vectorT = vector3df(TexInfo[texRef].vectorT[0], TexInfo[texRef].vectorT[2], TexInfo[texRef].vectorT[1]);
 	f32 s, t;
-	s = (vert.dotProduct(vectorS) + TexInfo[texRef].fShiftS);
-	t = (vert.dotProduct(vectorT) + TexInfo[texRef].fShiftT);
+	s = vectorS.dotProduct(vert);
+		//+ TexInfo[texRef].fShiftS));
+	t = vectorT.dotProduct(vert);
+	//+ TexInfo[texRef].fShiftT));
+
+	snprintf( buf, sizeof ( buf ),
+		"%f %f", s, t);
+	device->getLogger()->log(buf, ELL_INFORMATION);
+
+
 	return vector2df(s, t);
 }
+
+/*IImage* CBSP30::loadImage(irr::io::IReadFile* file, u64 seek) const
+{
+	tBSPMiptex header;
+
+	file->seek(seek);
+	file->read(&header, sizeof(header));
+
+#ifdef __BIG_ENDIAN__
+	header.width = os::Byteswap::byteswap(header.width);
+	header.height = os::Byteswap::byteswap(header.height);
+#endif
+
+	// palette
+	//u32 paletteofs = header.mipmap[0] + ((rawtexsize * 85) >> 6) + 2;
+	u32 *pal = new u32 [ 192 + 256 ];
+	u8 *s = (u8*) pal;
+
+	file->seek ( file->getSize() - 768 - 2 );
+	file->read ( s, 768 );
+	u32 i;
+
+	for ( i = 0; i < 256; ++i, s+= 3 )
+	{
+		pal [ 192 + i ] = 0xFF000000 | s[0] << 16 | s[1] << 8 | s[2];
+	}
+
+	ECOLOR_FORMAT format = ECF_R8G8B8;
+
+	// transparency in filename;-) funny. rgb:0x0000FF is colorkey
+	if ( file->getFileName().findFirst ( '{' ) >= 0 )
+	{
+		format = ECF_A8R8G8B8;
+		pal [ 192 + 255 ] &= 0x00FFFFFF;
+	}
+
+	u32 rawtexsize = header.width * header.height;
+
+
+	u8 *rawtex = new u8 [ rawtexsize ];
+
+	file->seek ( header.mipmap[0] );
+	file->read(rawtex, rawtexsize);
+
+	IImage* image = new CImage(format, core::dimension2d<u32>(header.width, header.height));
+
+	switch ( format )
+	{
+	case ECF_R8G8B8:
+		video::CColorConverter::convert8BitTo24Bit(rawtex, (u8*)image->lock(), header.width, header.height, (u8*) pal + 768, 0, false);
+		break;
+	case ECF_A8R8G8B8:
+		video::CColorConverter::convert8BitTo32Bit(rawtex, (u8*)image->lock(), header.width, header.height, (u8*) pal + 768, 0, false);
+		break;
+	}
+
+	image->unlock();
+
+	delete [] rawtex;
+	delete [] pal;
+
+	return image;
+}*/
+
 
 
 }
