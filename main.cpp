@@ -14,7 +14,7 @@ int main()
 {
 
 	IrrlichtDevice *device =
-		createDevice(video::EDT_DIRECT3D9, core::dimension2d<u32>(1200, 900));
+		createDevice(video::EDT_DIRECT3D9, core::dimension2d<u32>(800, 600));
 	device->getLogger()->setLogLevel(ELL_DEBUG);
 
 	if (device == 0)
@@ -27,18 +27,12 @@ int main()
 
 	CBSP30* BSPL = new CBSP30(device);
 	if (device->getFileSystem()->addFileArchive("../../media/hlbsp.pk3"))
-		//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("boxmaptest.bsp"));
+		//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("hrp_cerberus_v4.bsp"));
 		BSPL->loadFile(device->getFileSystem()->createAndOpenFile("chicago.bsp"));
-
-	
-	
-	
-	//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("chicago.bsp"));
-	
-
+		//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("xenoncity_true_b3v2.bsp"));
 	//scene::IAnimatedMesh* mesh = smgr->getMesh("boxmaptest.bsp");
 	scene::ISceneNode* node = 0;
-
+	
 
 	//node = smgr->addMeshSceneNode(BSPL->getMesh());
 	node = smgr->addOctreeSceneNode(BSPL->getMesh());
@@ -67,13 +61,14 @@ int main()
 	node->setMaterialFlag(EMF_LIGHTING, false);
 	device->getCursorControl()->setVisible(false);
 	//node->setMaterialFlag(EMF_LIGHTING, false);
-	//node->setRotation(vector3df(-90,0,0));
+	node->setRotation(vector3df(0,0,0));
 
 	int lastFPS = -1;
 	int fps = 0;
 	u32 then = device->getTimer()->getTime();
-	 const f32 MOVEMENT_SPEED = 0.f;
+	 const f32 MOVEMENT_SPEED = 2.f;
 	f32 axis=0;
+
 	while(device->run())
 	{
 		if (device->isWindowActive())
@@ -95,7 +90,7 @@ int main()
 
 				if(axis > 360)
 					axis = 0;
-			//node->setRotation(vector3df(-90,axis,0));
+			//node->setRotation(vector3df(0,axis,0));
 
 			fps = driver->getFPS();
 

@@ -187,24 +187,14 @@ namespace irr
 			};
 
 			s32 *tBSPMiptexOffset;
-
-			#define MAXTEXTURENAME 16
-			#define MIPLEVELS 4
-
-
 			struct tBSPMiptex
 			{
-				char szName[MAXTEXTURENAME];
+				char szName[16];
 				u32 width, height;
-				u32 mipmap[MIPLEVELS];
+				u32 mipmap[4];
 			};
 
-			struct miptex_halflife
-			{
-				c8  name[16];
-				u32 width, height;
-				u32 mipmap[4];		// four mip maps stored
-			} PACK_STRUCT;
+
 
 
 			struct tBSPEdges
@@ -258,10 +248,9 @@ namespace irr
 			tBSPHeader header;
 			tBSPPlane* Planes;
 			tBSPMipheader* Mipheader;
-			//u32* Textures;
 			tBSPVertex* Vertices;
-			//tBSPMiptex* Miptex[];
-			std::vector <tBSPMiptex*> Miptex;
+			tBSPMiptex* Miptex;
+			std::vector <tBSPMiptex*> mipArray;
 			tBSPNode* Nodes;
 			tBSPFace* Faces;
 			tBSPLightmap* LightMaps;
@@ -271,6 +260,10 @@ namespace irr
 			tBSPModel* Models;
 			tBSPTexInfo* TexInfo;
 			std::vector<video::ITexture*> texArray;
+			std::vector<video::ITexture*> texArray2;
+			
+			u32* mipTexL;
+			u32* mipTexH;
 
 			s32 NumPlanes;
 			s32 NumTextures;
@@ -316,9 +309,9 @@ namespace irr
 			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex);
 			u32 xor128(void);
 			scene::SMesh** buildMesh(s32 num);
-			//video::IImage* loadImage(irr::io::IReadFile* file, u64 seek) const;
+			//video::IImage* loadImage(irr::io::IReadFile* file, u64 seek);
 			core::vector3df Vert(int vert);//Returns vector3D from Vertex Lump
-
+			core::vector3df returnVector(f32 v3d[]);
 			core::vector3df NormalPlane(int plane);//Returns vector3D from Plane Lump
 
 			inline void copy( video::S3DVertex2TCoords * dest, const tBSPVertex * source,
@@ -329,12 +322,14 @@ namespace irr
 			video::IVideoDriver* Driver;
 			core::stringc LevelName;
 			c8 buf[256];
+			
 			struct SToBuffer
 			{
 				s32 takeVertexColor;
 				u32 index;
 			};
 			void cleanLoader ();
+
 			void calcBoundingBoxes();
 		};
 
