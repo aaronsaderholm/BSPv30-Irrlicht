@@ -309,10 +309,8 @@ namespace irr
 			video::SColor ColorGen();
 			void constructMesh();
 			void loadTextures();
-			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex); 	//returns UV coordinates for vertices
-
-
-			u32 xor128(void);//generates a random number using xor128 algorithm
+			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex);
+			u32 xor128(void);
 			scene::SMesh** buildMesh(s32 num);
 			//video::IImage* loadImage(irr::io::IReadFile* file, u64 seek);
 			core::vector3df Vert(int vert);//Returns vector3D from Vertex Lump

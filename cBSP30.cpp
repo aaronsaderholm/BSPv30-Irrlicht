@@ -181,7 +181,7 @@ void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
 	assert(_CrtCheckMemory());
 	texArray.resize(NumTextures);
 	texArray2.resize(NumTextures);
-	//device->getFileSystem()->addFileArchive("chicago.wad");
+	device->getFileSystem()->addFileArchive("chicago.wad");
 	u32 externtexcount =0;//keeps track of number of external textures
 	for (s32 i=0; i < NumTextures; i++)
 	{
@@ -401,7 +401,7 @@ void CBSP30::constructMesh()
 					buffer = new SMeshBuffer();
 					Mesh.back()->addMeshBuffer(buffer);
 					
-					//buffer->Material.Lighting = false;
+					buffer->Material.Lighting = false;
 					buffer->Material.BackfaceCulling = true;
 					buffer->Material.FrontfaceCulling = false;
 					int texID = Faces[k].textureID;
