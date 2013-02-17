@@ -161,11 +161,6 @@ void CBSP30::printLoaded()
 		device->getLogger()->log(buf, ELL_INFORMATION);
 	}
 
-//! returns the amount of frames in milliseconds. If the amount is 1, it is a static (=non animated) mesh.
-
-
-//! returns the animated mesh based on a detail level. 0 is the lowest, 255 the highest detail. Note, that some Meshes will ignore the detail level.
-
 
 
 void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
@@ -186,10 +181,8 @@ void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
 	assert(_CrtCheckMemory());
 	texArray.resize(NumTextures);
 	texArray2.resize(NumTextures);
-	device->getFileSystem()->addFileArchive("../../media/chicago.wad");
-	io::IReadFile* dummyfile = device->getFileSystem()->createAndOpenFile("cyberwall200509");
-	ITexture* DummyTexture = Driver->getTexture(dummyfile);
-	u32 externtexcount =0;
+	//device->getFileSystem()->addFileArchive("chicago.wad");
+	u32 externtexcount =0;//keeps track of number of external textures
 	for (s32 i=0; i < NumTextures; i++)
 	{
 		Miptex = new tBSPMiptex;
@@ -199,6 +192,7 @@ void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
 		mipArray.push_back(Miptex);
 		int rawOffset = Miptex->mipmap[0];
 		
+		//if the offset to the miptex is 0, it is an external texture and isn't stored in the map file.
 		if(rawOffset != 0)
 		{
 
@@ -211,12 +205,16 @@ void CBSP30::loadTextures(tBSPLump* l, io::IReadFile* file)
 				str2[k] = 0;
 			strcat(str2, Miptex->szName);
 			strcat(str2, ".wal2");
+
+			//We create a virtual file in memory from the miptex data and then we call the image loader
+			//on this virtual file.
 			io::IReadFile* memoryFile = device->getFileSystem()->createMemoryReadFile(tempBuffer, allocsize, str2, true);
 			texArray[i] = Driver->getTexture(memoryFile);	
 
 		}
 		else
 		{
+			//We don't currently load external textures, but if we did the function for that would go here.
 			snprintf( buf, sizeof ( buf ),
 				"External Texture %s", Miptex->szName);
 			device->getLogger()->log(buf, ELL_INFORMATION);
@@ -362,10 +360,7 @@ void CBSP30::loadTexinfo(tBSPLump* l, io::IReadFile* file)
 
 
 
-/*
-	parse entity & shader
-	calls callback on content in {}
-*/
+
 
 
 SColor CBSP30::ColorGen()
@@ -390,64 +385,6 @@ void CBSP30::constructMesh()
 	SColor color;	
 	Mesh.clear();
 	Mesh.push_back(new SMesh);
-	/*
-
-	for(int i=0; i < NumTexinfo; i++)
-	{
-		buffer = 0;
-		buffer = new SMeshBuffer();
-		Mesh.back()->addMeshBuffer(buffer);
-		//buffer->Material.setTexture(0, Driver->getTexture("../../media/irrlichtlogo2.png"));
-		buffer->Material.TextureLayer[0].TextureWrapV = video::ETC_CLAMP;
-		buffer->Material.TextureLayer[0].TextureWrapU = video::ETC_CLAMP;
-
-		buffer->Material.setTexture(0,texArray2[TexInfo[i].iMiptex]);
-		buffer->Material.BackfaceCulling = true;
-		buffer->Material.FrontfaceCulling = false;
-		buffer->Vertices.push_back(S3DVertex(vector3df(0 + (50*i), 0, 0), vector3df(0, 0, 1), color, vector2df(0, 0)));
-		buffer->Vertices.push_back(S3DVertex(vector3df(0 + (50*i), 50 , 0), vector3df(0, 0, 1), color, vector2df(0, 1)));
-		buffer->Vertices.push_back(S3DVertex(vector3df(50 + (50*i), 50, 0), vector3df(0, 0, 1), color, vector2df(1, 1)));
-		buffer->Vertices.push_back(S3DVertex(vector3df(50 + (50*i), 0, 0), vector3df(0, 0, 1), color, vector2df(1, 0)));
-
-		buffer->Indices.push_back(0);
-		buffer->Indices.push_back(1);
-		buffer->Indices.push_back(2);
-		
-		buffer->Indices.push_back(0);
-		buffer->Indices.push_back(2);
-		buffer->Indices.push_back(3);
-
-
-	}
-
-		for(int i=0; i < NumTexinfo; i++)
-	{
-		buffer = 0;
-		buffer = new SMeshBuffer();
-		Mesh.back()->addMeshBuffer(buffer);
-		//buffer->Material.setTexture(0, Driver->getTexture("../../media/irrlichtlogo2.png"));
-		buffer->Material.TextureLayer[0].TextureWrapV = video::ETC_CLAMP;
-		buffer->Material.TextureLayer[0].TextureWrapU = video::ETC_CLAMP;
-
-		buffer->Material.setTexture(0,texArray[TexInfo[i].iMiptex]);
-		buffer->Material.BackfaceCulling = true;
-		buffer->Material.FrontfaceCulling = false;
-		buffer->Vertices.push_back(S3DVertex(vector3df(0 + (50*i), 50, 0), vector3df(0, 0, 1), color, vector2df(0, 0)));
-		buffer->Vertices.push_back(S3DVertex(vector3df(0 + (50*i), 100 , 0), vector3df(0, 0, 1), color, vector2df(0, 1)));
-		buffer->Vertices.push_back(S3DVertex(vector3df(50 + (50*i), 100, 0), vector3df(0, 0, 1), color, vector2df(1, 1)));
-		buffer->Vertices.push_back(S3DVertex(vector3df(50 + (50*i), 50, 0), vector3df(0, 0, 1), color, vector2df(1, 0)));
-
-		buffer->Indices.push_back(0);
-		buffer->Indices.push_back(1);
-		buffer->Indices.push_back(2);
-		
-		buffer->Indices.push_back(0);
-		buffer->Indices.push_back(2);
-		buffer->Indices.push_back(3);
-
-
-	}*/
-
 
 
 	for (int z=0; z< NumModels; z++)
@@ -464,16 +401,11 @@ void CBSP30::constructMesh()
 					buffer = new SMeshBuffer();
 					Mesh.back()->addMeshBuffer(buffer);
 					
-					buffer->Material.Lighting = false;
+					//buffer->Material.Lighting = false;
 					buffer->Material.BackfaceCulling = true;
 					buffer->Material.FrontfaceCulling = false;
 					int texID = Faces[k].textureID;
 					buffer->Material.setTexture(0,texArray[TexInfo[texID].iMiptex]);
-					//buffer->Material.MaterialType(EMT_LIGHTMAP)
-
-					//buffer->Material.MaterialType = EMT_SOLID;
-					//buffer->Material.TextureLayer[0].TextureWrapV = video::ETC_CLAMP;
-					//buffer->Material.TextureLayer[0].TextureWrapU = video::ETC_CLAMP;
 					f32 sx=1, sy=1;
 					
 

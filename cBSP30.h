@@ -28,6 +28,7 @@
 #include <queue>
 #include <vector>
 
+//
 #define MAX_MAP_HULLS        4
 
 #define MAX_MAP_MODELS       400
@@ -110,6 +111,8 @@ namespace irr
 				kModels			= 14,
 				kMaxLumps		= 15, // A constant to store the number of lumps	
 			};
+
+			//These structs contain definitions of data.  They are important as the file is read in by offsets.
 
 			struct tBSPLump
 			{
@@ -306,8 +309,10 @@ namespace irr
 			video::SColor ColorGen();
 			void constructMesh();
 			void loadTextures();
-			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex);
-			u32 xor128(void);
+			core::vector2df CBSP30::UVCoord(u32 vertIndex, u32 faceIndex); 	//returns UV coordinates for vertices
+
+
+			u32 xor128(void);//generates a random number using xor128 algorithm
 			scene::SMesh** buildMesh(s32 num);
 			//video::IImage* loadImage(irr::io::IReadFile* file, u64 seek);
 			core::vector3df Vert(int vert);//Returns vector3D from Vertex Lump

@@ -14,7 +14,7 @@ int main()
 {
 
 	IrrlichtDevice *device =
-		createDevice(video::EDT_DIRECT3D9, core::dimension2d<u32>(800, 600));
+		createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800, 600));
 	device->getLogger()->setLogLevel(ELL_DEBUG);
 
 	if (device == 0)
@@ -26,9 +26,9 @@ int main()
 	c8 buf[256];
 
 	CBSP30* BSPL = new CBSP30(device);
-	if (device->getFileSystem()->addFileArchive("../../media/hlbsp.pk3"))
+	//if (device->getFileSystem()->addFileArchive("../../media/hlbsp.pk3"))
 		//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("hrp_cerberus_v4.bsp"));
-		BSPL->loadFile(device->getFileSystem()->createAndOpenFile("chicago.bsp"));
+		BSPL->loadFile(device->getFileSystem()->createAndOpenFile("media/chicago.bsp"));
 		//BSPL->loadFile(device->getFileSystem()->createAndOpenFile("xenoncity_true_b3v2.bsp"));
 	//scene::IAnimatedMesh* mesh = smgr->getMesh("boxmaptest.bsp");
 	scene::ISceneNode* node = 0;
@@ -39,35 +39,34 @@ int main()
 	//node = smgr->addMeshSceneNode(mesh->getMesh(0));
 	node->setAutomaticCulling( EAC_OFF );
 
+	scene::ILightSceneNode* light1 =
+		smgr->addLightSceneNode(0, core::vector3df(0,0,0),
+		video::SColorf(0.5f, 1.0f, 0.5f, 0.0f), 2000.0f);
 
 
-	scene::ISceneNode* skybox=smgr->addSkyBoxSceneNode(
-		driver->getTexture("../../media/irrlicht2_up.jpg"),
-		driver->getTexture("../../media/irrlicht2_dn.jpg"),
-		driver->getTexture("../../media/irrlicht2_lf.jpg"),
-		driver->getTexture("../../media/irrlicht2_rt.jpg"),
-		driver->getTexture("../../media/irrlicht2_ft.jpg"),
-		driver->getTexture("../../media/irrlicht2_bk.jpg"));
-	
+
+	//This adds a skybox for cosmetic effect, but is otherwise irrelevent.
+
+	/*scene::ISceneNode* skybox=smgr->addSkyBoxSceneNode(
+		driver->getTexture("media/irrlicht2_up.jpg"),
+		driver->getTexture("media/irrlicht2_dn.jpg"),
+		driver->getTexture("media/irrlicht2_lf.jpg"),
+		driver->getTexture("media/irrlicht2_rt.jpg"),
+		driver->getTexture("media/irrlicht2_ft.jpg"),
+		driver->getTexture("media/irrlicht2_bk.jpg"));*/
 
 
-	//node->setMaterialTexture( 0, driver->getTexture("../../media/rockwall.jpg") );
-	//node->setMaterialType( video::EMT_SOLID );
 
-
-	scene::ISceneNode* skydome=smgr->addSkyDomeSceneNode(driver->getTexture("../../media/skydome.jpg"),16,8,0.95f,2.0f);
+	//scene::ISceneNode* skydome=smgr->addSkyDomeSceneNode(driver->getTexture("media/skydome.jpg"),16,8,0.95f,2.0f);
 
 	smgr->addCameraSceneNodeFPS();
-	node->setMaterialFlag(EMF_LIGHTING, false);
+	//node->setMaterialFlag(EMF_LIGHTING, false);
 	device->getCursorControl()->setVisible(false);
 	//node->setMaterialFlag(EMF_LIGHTING, false);
 	node->setRotation(vector3df(0,0,0));
 
 	int lastFPS = -1;
 	int fps = 0;
-	u32 then = device->getTimer()->getTime();
-	 const f32 MOVEMENT_SPEED = 2.f;
-	f32 axis=0;
 
 	while(device->run())
 	{
@@ -82,23 +81,15 @@ int main()
 			
 
 			// Work out a frame delta time.
-			const u32 now = device->getTimer()->getTime();
-			const f32 frameDeltaTime = (f32)(now - then) / 1000.f; // Time in seconds
-			then = now;
 
-			axis = (1 * MOVEMENT_SPEED * frameDeltaTime) + axis;
-
-				if(axis > 360)
-					axis = 0;
-			//node->setRotation(vector3df(0,axis,0));
 
 			fps = driver->getFPS();
-
+			light1->setPosition(smgr->getActiveCamera()->getPosition());
 
 
 			if (lastFPS != fps)
 			{
-				core::stringw str = L"Irrlicht Engine - Quake 3 Map example [";
+				core::stringw str = L"Half-Life Map Example [";
 				str += driver->getName();
 				str += "] FPS:";
 				str += fps;
